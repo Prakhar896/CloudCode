@@ -85,7 +85,7 @@ class CloudCode:
         self.fragment.write()
         print("CC: Code written.")
     
-    def fetchRun(self, ignoreExecuted=False, noPrint=False):
+    def fetchRun(self, ignoreExecuted=False, noPrint=False, runner=None):
         data = self.fragment.read()
         if isinstance(data, str):
             raise Exception("CLOUDCODE ERROR: Failed to fetch run. Response: {}".format(data))
@@ -99,7 +99,10 @@ class CloudCode:
             return
         
         # Execute the code
-        exec(data["code"])
+        if runner is not None:
+            runner(data["code"])
+        else:
+            exec(data["code"])
         
         print("CC: Code executed.")
         
@@ -107,7 +110,7 @@ class CloudCode:
             self.fragment.data["executed"] = True
             self.fragment.write()
     
-    def fetchRunLive(self):
+    def fetchRunLive(self, runner=None):
         while True:
-            self.fetchRun(ignoreExecuted=False, noPrint=True)
+            self.fetchRun(ignoreExecuted=False, noPrint=True, runner=runner)
             time.sleep(2)

@@ -143,6 +143,7 @@ class CloudCode:
                 r = self.fragment.writeWS()
                 if r != True:
                     print("CC ERROR: Failed to write execution success. Response: {}".format(r))
+                time.sleep(0.5)
             
             if not noPrint:
                 print("CC: Code executed.")

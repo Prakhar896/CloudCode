@@ -114,3 +114,54 @@ class CloudCode:
         while True:
             self.fetchRun(ignoreExecuted=False, noPrint=True, runner=runner)
             time.sleep(2)
+    
+    def fetchRunLiveWS(self, ignoreExecuted=False, ignoreInitial=False, noPrint=False, runner=None):
+        if self.fragment.stream == None:
+            r = self.fragment.initStream()
+            if r != True:
+                print("CC ERROR: Failed to initialize stream. Response: {}".format(r))
+        
+        def defaultWSRunner(data: dict):
+            if data["code"].strip() == "":
+                print("CC: No code to run.")
+                return
+            
+            if not ignoreExecuted and data["executed"]:
+                # This flow typically would not happen in a WebSocket-streaming based context
+                if not noPrint:
+                    print("CC: Code already executed.")
+                return
+
+            # Execute the code
+            if runner is not None:
+                runner(data["code"])
+            else:
+                exec(data["code"])
+            
+            if not data["executed"]:
+                self.fragment.data["executed"] = True
+                r = self.fragment.writeWS()
+                if r != True:
+                    print("CC ERROR: Failed to write execution success. Response: {}".format(r))
+            
+            if not noPrint:
+                print("CC: Code executed.")
+        
+        if not ignoreInitial:
+            time.sleep(0.5)
+            r = self.fragment.readWS()
+            if isinstance(r, str):
+                print("CC ERROR: Failed to read initial data. Response: {}".format(r))
+                return
+            time.sleep(0.5)
+            defaultWSRunner(r)
+        
+        try:
+            print()
+            print("CC: Live stream started.")
+            r = self.fragment.liveStream(handler=defaultWSRunner)
+            if r != None:
+                raise Exception(r)
+        except KeyboardInterrupt:
+            print()
+            print("CC: Stopped live stream.")

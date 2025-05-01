@@ -122,7 +122,7 @@ class CloudCode:
                 print("CC ERROR: Failed to initialize stream. Response: {}".format(r))
         
         def defaultWSRunner(data: dict):
-            if data["code"].strip() == "":
+            if "code" not in data or data["code"].strip() == "":
                 print("CC: No code to run.")
                 return
             
@@ -164,5 +164,6 @@ class CloudCode:
             if r != None:
                 raise Exception(r)
         except KeyboardInterrupt:
+            self.fragment.stream.disconnect()
             print()
             print("CC: Stopped live stream.")
